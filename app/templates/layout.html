@@ -1,0 +1,167 @@
+<!doctype html>
+<html lang="en">
+    <head>
+        <meta http-equiv="content-type" content="text/html; charset=utf-8">
+        <link rel="shortcut icon" href="{{ url_for('static', filename='favicon.ico') }}">
+        <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.1.1/jquery.min.js"></script>
+        <script src="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.7/js/bootstrap.min.js"></script>
+        <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.7/css/bootstrap.min.css">
+    </head>
+    <body>
+        <div class="searchContent">
+            <div class="container">
+                <div class="row">
+                        <div class="col-sm-6 col-sm-offset-3">
+                            <div id="imaginary_container">
+                                <div class="input-group stylish-input-group">
+                                    <input type="text" id="mySearch" onkeyup="mySerach()"  class="form-control"  placeholder="Search" >
+                                    <span class="input-group-addon">
+                                        <button type="submit">
+                                            <span class="glyphicon glyphicon-search"></span>
+                                        </button>
+                                    </span>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            <div class="list">
+                <ul class="list-group" id="myList">
+                <li class="list-group-item songlist resultsLine">
+                    <div class="results"></div>
+                </li>
+              </ul>
+            </div>
+        </div>
+        <div class="allbumContent">
+            <div class="container">
+              <div class="page-header">
+                <h1 id="backbtn"> < </h1>
+              </div>
+              <div id="singer">
+                </div>
+                <div id="description">
+                </div>
+                <div id="albuns">
+                </div>
+            </div>
+        </div>
+
+  </body>
+
+    <script type="text/javascript">
+        $(document).ready(function(){
+            idBand = null
+            $('.allbumContent').hide();
+            $.ajax({
+                type        : 'GET', // define the type of HTTP verb we want to use (POST for our form)
+                url         : 'https://iws-recruiting-bands.herokuapp.com/api/bands', // the url where we want to POST
+                dataType    : 'json', // what type of data do we expect back from the server
+                encode          : true
+            })
+            .done(function(data) {
+                $('.results').text(data.length + ' Results');
+                $( data).each(function( index, value ) {
+                    listName = document.createElement('li');
+                    listName.id = value.id;
+                    $(listName).addClass('list-group-item songlist');
+
+                    $('<div/>', {
+                        text: value.name,
+                        class: 'name'
+                    }).appendTo(listName);
+
+                    $('<div/>', {
+                        text: value.numPlays + " Plays",
+                        class: 'plays'
+                    }).appendTo(listName);
+
+                    $( ".list-group" ).append(listName);
+                });
+            });
+
+
+            $('ul').on('click', 'li', function() {
+
+                $.ajax({
+                    type        : 'GET',
+                    url         : 'https://iws-recruiting-bands.herokuapp.com/api/bands/' + $(this)[0].id, // the url where we want to POST
+                    dataType    : 'json',
+                    encode          : true
+                })
+                .done(function(data) {
+                    $('.searchContent').hide();
+                    $('.allbumContent').show();
+
+                    $('#singer').text(data.name);
+                    $('#description').text(data.biography);
+
+                    idBand = data.id;
+
+                });
+
+                //the endpoint take a long time, not sure if the better id return all albuns in the same time
+               {# $.ajax({
+                    type        : 'GET', // define the type of HTTP verb we want to use (POST for our form)
+                    url         : 'https://iws-recruiting-bands.herokuapp.com/api/albums', // the url where we want to POST
+                    dataType    : 'json', // what type of data do we expect back from the server
+                    encode          : true
+                })
+                .done(function(data) {
+                    $( data).each(function( index, value ) {
+                        if(idBand == value.id){
+                            $('#albuns').prepend('<a ' + value.name + '/>');
+                        }
+                    });
+                });#}
+            });
+
+            $('#backbtn').click(function () {
+                    $('.searchContent').show();
+                    $('.allbumContent').hide();
+            })
+        });
+
+        function mySerach(){
+                $('.withoutResults').remove();
+
+                var input, filter, ul, li, a, i;
+                input = document.getElementById('mySearch');
+                filter = input.value.toUpperCase();
+                ul = document.getElementById("myList");
+                li = ul.getElementsByTagName('li');
+                singer = false;
+
+                for (i = 0; i < li.length; i++) {
+                    div = li[i].getElementsByTagName("div")[0];
+                    if (div.innerHTML.toUpperCase().indexOf(filter) > -1) {
+                        li[i].style.display = "";
+                        singer = true;
+                    } else {
+                        li[i].style.display = "none";
+                    }
+                }
+                if(!singer){
+                    list = document.createElement('li');
+                    $(list).addClass('withoutResults');
+
+                    $('<div/>', {
+                        text: 'Sem resultados'
+                    }).appendTo(list);
+
+                    $('<div/>', {
+                        id: 'face',
+                        class: 'plays'
+                    }).appendTo(list);
+
+
+                    $( ".list-group" ).append(list);
+
+                    $("#face").prepend('<img src="static/images/no_results.png" height="100" width="100"/>');
+                }
+            }
+
+    </script>
+
+    <link rel="stylesheet" type="text/css" href="static/css/app.css">
+</html>
